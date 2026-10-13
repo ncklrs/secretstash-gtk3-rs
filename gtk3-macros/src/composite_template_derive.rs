@@ -88,3 +88,16 @@ pub fn impl_composite_template(input: &syn::DeriveInput) -> TokenStream {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_template_reports_a_compiler_error() {
+        let input = syn::parse_quote!(struct MissingTemplate {});
+        let tokens = impl_composite_template(&input).to_string();
+        assert!(tokens.contains("compile_error"));
+        assert!(tokens.contains("requires #[template"));
+    }
+}
