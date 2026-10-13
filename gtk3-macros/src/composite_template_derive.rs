@@ -1,7 +1,6 @@
 // Take a look at the license at the top of the repository in the LICENSE file.
 
 use proc_macro2::TokenStream;
-use proc_macro_error::{abort, abort_call_site};
 use quote::quote;
 use syn::Data;
 
@@ -29,7 +28,7 @@ fn gen_template_child_bindings(fields: &syn::Fields) -> TokenStream {
     let crate_ident = crate_ident_new();
     let attributed_fields = match parse_fields(fields) {
         Ok(fields) => fields,
-        Err(err) => abort!(err.span(), err.to_string()),
+        Err(err) => abort_span!(err.span(), err.to_string()),
     };
 
     let recurse = attributed_fields.iter().map(|field| match field.attr.ty {
@@ -87,5 +86,18 @@ pub fn impl_composite_template(input: &syn::DeriveInput) -> TokenStream {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_template_reports_a_compiler_error() {
+        let input = syn::parse_quote!(struct MissingTemplate {});
+        let tokens = impl_composite_template(&input).to_string();
+        assert!(tokens.contains("compile_error"));
+        assert!(tokens.contains("requires #[template"));
     }
 }
